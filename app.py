@@ -143,6 +143,8 @@ def severidade_de_acao(acao_recomendada: Optional[str]) -> str:
         return "critical"
     if acao == "liberar":
         return "ok"
+    if acao == "revisar":          # DIVERGENCIA_CATEGORIA isolada = erro tecnico IA, nao suspeito real
+        return "info"
     return "warning"
 
 
