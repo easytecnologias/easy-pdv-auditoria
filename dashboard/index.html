@@ -1,0 +1,1611 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Easy Auditoria PDV</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=51">
+  <script>if ('scrollRestoration' in history) history.scrollRestoration = 'manual';</script>
+  <style>
+    .video-simulation #eventVideo {
+      width: 100%;
+      max-height: 70vh;
+      display: block;
+      background: #000;
+    }
+    .video-simulation .video-unavailable {
+      padding: 40px 16px;
+      text-align: center;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-mark">E</div>
+        <div>
+          <strong>Easy Auditoria</strong>
+          <span>Central de PDVs</span>
+        </div>
+      </div>
+      <h2>Entrar</h2>
+      <p id="loginError" class="login-error" hidden></p>
+      <form id="loginForm">
+        <label>E-mail
+          <input id="loginEmail" type="email" autocomplete="username" placeholder="seu@email.com" required>
+        </label>
+        <label>Senha
+          <input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••" required>
+        </label>
+        <button type="submit" id="loginBtn">Entrar</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="appShell" class="app-shell" hidden>
+    <div id="mobileBackdrop" class="mobile-backdrop"></div>
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">E</div>
+        <div>
+          <strong>Easy Auditoria</strong>
+          <span>Central de PDVs</span>
+        </div>
+      </div>
+
+      <nav class="nav-list" aria-label="Navegação principal">
+        <button class="nav-item active" data-view="overview"><i data-lucide="layout-dashboard"></i><span>Visão geral</span></button>
+
+        <div class="nav-group" id="navGrupoPdv">
+          <button class="nav-item nav-group-toggle">
+            <i data-lucide="monitor-dot"></i>
+            <span>PDV</span>
+            <i data-lucide="chevron-right" class="nav-chevron"></i>
+          </button>
+          <div class="nav-sub" id="navPdvSub">
+            <button class="nav-item nav-sub-item" data-view="terminals">
+              <i data-lucide="scan-barcode"></i><span>PDV VAR</span>
+            </button>
+            <button class="nav-item nav-sub-item" data-view="receipts">
+              <i data-lucide="receipt-text"></i><span>Cupons</span>
+            </button>
+            <button class="nav-item nav-sub-item" data-view="consultar">
+              <i data-lucide="search"></i><span>Consultas</span>
+            </button>
+            <button class="nav-item nav-sub-item" data-view="alerts">
+              <i data-lucide="bell-ring"></i><span>Alertas</span><b id="navAlertsBadge">0</b>
+            </button>
+            <button class="nav-item nav-sub-item" data-view="auditIa">
+              <i data-lucide="clipboard-check"></i><span>Auditoria IA</span>
+            </button>
+            <button class="nav-item nav-sub-item" data-view="ocorrencias">
+              <i data-lucide="file-text"></i><span>Ocorrências</span>
+            </button>
+            <button class="nav-item nav-sub-item" data-view="reports">
+              <i data-lucide="chart-no-axes-combined"></i><span>Relatórios</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="nav-group" id="navConfiguracoes">
+          <button class="nav-item nav-group-toggle">
+            <i data-lucide="settings"></i>
+            <span>Configurações</span>
+            <i data-lucide="chevron-right" class="nav-chevron"></i>
+          </button>
+          <div class="nav-sub" id="navConfigSub">
+            <button class="nav-item nav-sub-item" data-view="config-loja">
+              <i data-lucide="store"></i><span>Loja &amp; PDVs</span>
+            </button>
+            <button class="nav-item nav-sub-item" data-view="config-auditoria">
+              <i data-lucide="cpu"></i><span>Auditoria IA</span>
+            </button>
+            <button class="nav-item nav-sub-item" data-view="config-camera">
+              <i data-lucide="camera"></i><span>Câmera (DVR)</span>
+            </button>
+            <button class="nav-item nav-sub-item" data-view="manutencao">
+              <i data-lucide="wrench"></i><span>Manutenção</span>
+            </button>
+            <button class="nav-item nav-sub-item" data-view="config-notificacoes">
+              <i data-lucide="bell"></i><span>Notificações</span>
+            </button>
+            <button class="nav-item nav-sub-item" data-view="config-usuarios" id="navUsuarios" style="display:none">
+              <i data-lucide="users"></i><span>Usuários &amp; Acesso</span>
+            </button>
+            <button class="nav-item nav-sub-item" data-view="lojas" id="navLojas" style="display:none">
+              <i data-lucide="store"></i><span>Lojas</span>
+            </button>
+          </div>
+        </div>
+        <button class="nav-item" id="sidebarLogoutBtn" style="width:100%;justify-content:flex-start;gap:10px;color:#c92a2a">
+          <i data-lucide="log-out"></i><span>Sair</span>
+        </button>
+        <div class="environment">
+          <span class="status-dot online"></span>
+          <span id="ambienteLabel">Produção</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="icon-button mobile-menu" aria-label="Abrir menu"><i data-lucide="menu"></i></button>
+        <div class="store-selector" style="position:relative">
+          <span>Operação</span>
+          <button id="lojaFilterButton"><span id="topbarLojaNome">—</span> <i data-lucide="chevron-down"></i></button>
+          <div class="pdv-filter-menu" id="lojaFilterMenu" style="min-width:220px;left:0;right:auto;z-index:100;max-height:300px;overflow-y:auto">
+            <div id="lojaFilterList"></div>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <div class="pdv-filter">
+            <button class="period-button" id="pdvFilterButton"><i data-lucide="monitor-dot"></i><span id="pdvFilterLabel">Todos os PDVs</span><i data-lucide="chevron-down"></i></button>
+            <div class="pdv-filter-menu" id="pdvFilterMenu">
+              <label><input type="checkbox" id="pdvFilterAll" checked> Todos os PDVs</label>
+              <hr>
+              <div id="pdvFilterList"></div>
+            </div>
+          </div>
+          <div class="date-nav">
+            <button id="prevDay" class="icon-button" aria-label="Dia anterior"><i data-lucide="chevron-left"></i></button>
+            <button class="period-button" id="dateLabelButton"><i data-lucide="calendar-days"></i><span id="currentDate">Hoje</span></button>
+            <input type="date" id="dateInput" class="date-input-hidden">
+            <button id="nextDay" class="icon-button" aria-label="Próximo dia"><i data-lucide="chevron-right"></i></button>
+          </div>
+          <button class="icon-button notification-button" aria-label="Notificações"><i data-lucide="bell"></i><span id="notifBadge">0</span></button>
+          <div class="profile" id="profileMenu" style="cursor:pointer">
+            <div class="avatar" id="profileAvatar">?</div>
+            <div><strong id="profileName">—</strong><span id="profileRole">—</span></div>
+            <i data-lucide="chevron-down"></i>
+            <div class="profile-dropdown" id="profileDropdown">
+              <button id="logoutBtn"><i data-lucide="log-out"></i> Sair</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Monitoramento em tempo real</p>
+            <h1>Visão geral operacional</h1>
+            <p>Acompanhe os caixas e revise somente eventos que exigem decisão humana.</p>
+          </div>
+          <div class="live-indicator"><span></span>Atualização ao vivo</div>
+        </div>
+
+        <section class="metrics" aria-label="Indicadores operacionais">
+          <!-- Operação -->
+          <article>
+            <div class="metric-icon green"><i data-lucide="monitor-check"></i></div>
+            <div><span>PDVs monitorados</span><strong id="metricPdvsTotal">0 <small id="metricPdvsOnline">/ 0 online</small></strong></div>
+          </article>
+          <article>
+            <div class="metric-icon blue"><i data-lucide="banknote"></i></div>
+            <div><span>Vendido hoje</span><strong id="metricVendidoHoje">R$ 0,00</strong></div>
+          </article>
+          <article>
+            <div class="metric-icon cyan"><i data-lucide="receipt"></i></div>
+            <div><span>Cupons fechados</span><strong id="metricCuponsFechados">0</strong></div>
+          </article>
+          <article>
+            <div class="metric-icon purple"><i data-lucide="sparkles"></i></div>
+            <div><span>Crédito Gemini restante</span><strong id="metricGeminiCredito">—</strong><small id="metricGeminiDetalhe" style="display:block;color:var(--muted);font-size:11px;margin-top:2px">—</small></div>
+          </article>
+        </section>
+
+        <!-- IDs ocultos para JS (fora do grid para não quebrar layout) -->
+        <div style="display:none" aria-hidden="true">
+          <span id="metricItensCaixa"></span><span id="metricItensCaixaDetalhe"></span>
+          <span id="metricAlertasPendentes"></span><span id="metricAlertasCriticos"></span>
+          <span id="metricIAFila"></span><span id="metricIAFilaDetalhe"></span>
+          <span id="metricIAAprovados"></span><span id="metricIADetalhe"></span>
+          <span id="metricIATempo"></span><span id="metricIATempoDetalhe"></span><span id="metricIATempoMinMax"></span>
+        </div>
+
+        <!-- Pipeline IA -->
+        <div class="pipeline-section">
+          <div class="pipeline-header">
+            <h3 class="pipeline-title">Pipeline de Auditoria IA</h3>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div class="pipeline-history">
+                <i data-lucide="history"></i>
+                <span>Historico IA</span>
+                <strong id="pipeHistoricoResumo">-</strong>
+                <small id="pipeHistoricoResumoSub">desde sempre</small>
+              </div>
+              <button onclick="abrirModalAuditarIntervalo()" title="Auditar cupons de uma data e faixa de horário específicos" style="display:flex;align-items:center;gap:5px;padding:5px 11px;font-size:12px;border:1px solid var(--border);background:var(--surface-soft);color:var(--muted);border-radius:7px;cursor:pointer;font-weight:500">
+                <i data-lucide="search" style="width:13px;height:13px"></i>Auditar período
+              </button>
+              <button id="btnZerarPipeline" onclick="zerarPipelineConfirm()" title="Zera a fila e marca todos os cupons de hoje como processados" style="display:flex;align-items:center;gap:5px;padding:5px 11px;font-size:12px;border:1px solid var(--border);background:var(--surface-soft);color:var(--muted);border-radius:7px;cursor:pointer;font-weight:500">
+                <i data-lucide="rotate-ccw" style="width:13px;height:13px"></i>Zerar pipeline
+              </button>
+            </div>
+          </div>
+          <div class="pipeline-flow">
+            <div class="pipeline-step pipeline-step--blue">
+              <div class="pipeline-icon"><i data-lucide="scan-barcode"></i></div>
+              <div class="pipeline-num" id="pipeItens">—</div>
+              <div class="pipeline-label" id="pipeItensLabel">Itens no caixa</div>
+              <div class="pipeline-sub" id="pipeItensSub">passaram pelo scanner</div>
+            </div>
+            <div class="pipeline-arrow"><i data-lucide="arrow-right"></i></div>
+            <div class="pipeline-step pipeline-step--amber">
+              <div class="pipeline-icon"><i data-lucide="hourglass"></i></div>
+              <div class="pipeline-num" id="pipeFila">—</div>
+              <div class="pipeline-label" id="pipeFilaLabel">Fila IA</div>
+              <div class="pipeline-sub" id="pipeFilaSub">aguardando 2.5 min</div>
+            </div>
+            <div class="pipeline-arrow"><i data-lucide="arrow-right"></i></div>
+            <div class="pipeline-step pipeline-step--cyan">
+              <div class="pipeline-icon"><i data-lucide="cpu"></i></div>
+              <div class="pipeline-num" id="pipeAnalisados">—</div>
+              <div class="pipeline-label" id="pipeAnalisadosLabel">Analisados</div>
+              <div class="pipeline-sub" id="pipeAnalisadosPct">—% do total</div>
+              <div class="pipeline-sub" id="pipeTempo" style="margin-top:2px;font-weight:600">—</div>
+            </div>
+            <div class="pipeline-arrow"><i data-lucide="arrow-right"></i></div>
+            <div class="pipeline-step" style="background:#f8f9fa">
+              <div class="pipeline-icon"><i data-lucide="ban" style="color:#868e96"></i></div>
+              <div class="pipeline-num" id="pipeDescartados" style="color:#868e96">—</div>
+              <div class="pipeline-label" id="pipeDescartadosLabel" style="color:#868e96">Descartados</div>
+              <div class="pipeline-sub" id="pipeDescartadosSub">hoje</div>
+            </div>
+            <div class="pipeline-arrow"><i data-lucide="arrow-right"></i></div>
+            <div class="pipeline-step" style="background:#e3fafc">
+              <div class="pipeline-icon"><i data-lucide="history" style="color:#0b7285"></i></div>
+              <div class="pipeline-num" id="pipeHistoricoTotal" style="color:#0b7285">—</div>
+              <div class="pipeline-label" id="pipeHistoricoLabel" style="color:#0b7285">Total histórico</div>
+              <div class="pipeline-sub" id="pipeHistoricoSub">pela IA desde sempre</div>
+            </div>
+            <div class="pipeline-arrow pipeline-arrow--split">
+              <i data-lucide="arrow-right"></i>
+            </div>
+            <div class="pipeline-outcomes">
+              <div class="pipeline-step pipeline-step--green">
+                <div class="pipeline-icon"><i data-lucide="check-circle"></i></div>
+                <div class="pipeline-num" id="pipeOk">—</div>
+                <div class="pipeline-label" id="pipeOkLabel">Aprovados</div>
+                <div class="pipeline-sub" id="pipeOkPct">—%</div>
+              </div>
+              <div class="pipeline-step pipeline-step--red">
+                <div class="pipeline-icon"><i data-lucide="triangle-alert"></i></div>
+                <div class="pipeline-num" id="pipeAlertas">—</div>
+                <div class="pipeline-label" id="pipeAlertasLabel">Alertas humanos</div>
+                <div class="pipeline-sub" id="pipeAlertasPct">—%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section class="content-grid">
+          <div class="alerts-panel">
+            <div class="section-toolbar">
+              <div>
+                <h2>Alertas recentes</h2>
+                <p>Eventos priorizados para revisão do supervisor</p>
+              </div>
+              <div class="toolbar-actions">
+                <label class="search-box"><i data-lucide="search"></i><input id="searchInput" placeholder="Cupom, produto ou PDV"></label>
+                <button class="filter-button"><i data-lucide="sliders-horizontal"></i><span>Filtros</span></button>
+              </div>
+            </div>
+
+            <div class="alert-tabs">
+              <button class="active" data-filter="all">Todos <span id="countAll">0</span></button>
+              <button data-filter="critical">Críticos <span id="countCritical">0</span></button>
+              <button data-filter="review">Em revisão <span id="countReview">0</span></button>
+              <button data-filter="resolved">Resolvidos <span id="countResolved">0</span></button>
+            </div>
+
+            <div class="table-wrap">
+              <table class="alerts-table">
+                <thead>
+                  <tr>
+                    <th>Severidade</th>
+                    <th>Horário</th>
+                    <th>PDV / Cupom</th>
+                    <th>Evento</th>
+                    <th>Produto registrado</th>
+                    <th>Confiança</th>
+                    <th>Estado</th>
+                    <th aria-label="Ações"></th>
+                  </tr>
+                </thead>
+                <tbody id="alertsTable"></tbody>
+              </table>
+            </div>
+            <div class="table-footer"><span id="alertsFooterText">Mostrando 0 alertas de hoje</span><button>Ver todas as ocorrências <i data-lucide="arrow-right"></i></button></div>
+          </div>
+
+          <aside class="activity-panel">
+            <div class="section-title">
+              <div><h2>Saúde dos PDVs</h2><p>Serviços essenciais</p></div>
+              <button class="icon-button" aria-label="Atualizar"><i data-lucide="refresh-cw"></i></button>
+            </div>
+            <div class="health-header"><span>PDV</span><span>Ponte</span><span>iMHDX</span><span>Auditoria</span></div>
+            <div id="healthGrid" class="health-grid"></div>
+            <button class="health-link" onclick="abrirMonitorTecnico()">Abrir monitor técnico <i data-lucide="arrow-up-right"></i></button>
+          </aside>
+        </section>
+
+      </section>
+
+      <!-- View: Usuários -->
+      <section class="workspace" id="viewUsers" style="display:none">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Controle de acesso</p>
+            <h1>Usuários</h1>
+            <p>Gerencie quem pode acessar o sistema e seus níveis de permissão.</p>
+          </div>
+          <button class="primary-action" id="btnNovoUsuario"><i data-lucide="user-plus"></i> Novo usuário</button>
+        </div>
+
+        <div class="alerts-panel" style="margin-top:0">
+          <div class="table-wrap">
+            <table class="users-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>E-mail</th>
+                  <th>Perfil</th>
+                  <th>Loja</th>
+                  <th>Status</th>
+                  <th aria-label="Ações"></th>
+                </tr>
+              </thead>
+              <tbody id="usuariosTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- View: Alertas (tabela dedicada) -->
+      <section class="workspace" id="viewAlerts" style="display:none">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Operação</p>
+            <h1>Alertas</h1>
+            <p>Eventos priorizados para revisão do supervisor.</p>
+          </div>
+        </div>
+
+        <!-- Filtros — mesmo padrão Cupons/Consultar -->
+        <div class="cupons-filtros">
+          <div class="cupons-datas">
+            <button class="period-button cupons-quick alerts2-date active" data-days="0">Hoje</button>
+            <button class="period-button cupons-quick alerts2-date" data-days="1">Ontem</button>
+            <button class="period-button cupons-quick alerts2-date" data-days="2">Anteontem</button>
+            <input type="date" id="alertsDateInput" class="cupons-select" style="cursor:pointer">
+          </div>
+          <div class="cupons-filtros-linha">
+            <div class="cupons-datas" style="flex-wrap:nowrap;gap:4px">
+              <button class="period-button alerts2-filter active" data-filter="all">Todos <span id="countAll2">0</span></button>
+              <button class="period-button alerts2-filter" data-filter="critical">Críticos <span id="countCritical2">0</span></button>
+              <button class="period-button alerts2-filter" data-filter="review">Em revisão <span id="countReview2">0</span></button>
+              <button class="period-button alerts2-filter" data-filter="resolved">Resolvidos <span id="countResolved2">0</span></button>
+            </div>
+            <label class="search-box" style="flex:1;min-width:160px"><i data-lucide="search"></i>
+              <input id="searchInput2" placeholder="Cupom, produto ou PDV">
+            </label>
+            <button class="icon-button" id="btnAlertsRefresh" title="Atualizar" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card)"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i></button>
+            <button class="icon-button" id="btnAlertasClear" title="Limpar todos do dia" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--danger,#e53e3e)"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
+          </div>
+        </div>
+
+        <!-- Tabela — mesmo padrão Cupons/Consultar -->
+        <div class="alerts-panel" style="margin-top:0">
+          <div class="cupons-table-wrap">
+            <table class="alerts-table cupons-table" style="min-width:760px">
+              <thead>
+                <tr>
+                  <th style="width:32px"><input type="checkbox" class="row-sel" id="selAllAlertas" title="Selecionar todos"></th>
+                  <th>Severidade</th>
+                  <th>Horário</th>
+                  <th>PDV / Cupom</th>
+                  <th>Evento</th>
+                  <th>Produto registrado</th>
+                  <th>Confiança</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="alertsTable2"></tbody>
+            </table>
+          </div>
+          <div class="paginacao" id="alertsPaginacao" style="display:none">
+            <span id="alertsPaginacaoInfo"></span>
+            <div class="paginacao-btns" id="alertsPaginacaoBtns"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View: Auditoria IA -->
+      <section class="workspace" id="viewAuditIa" style="display:none">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Auditoria visual</p>
+            <h1>Auditoria IA</h1>
+            <p>Itens aprovados e suspeitos técnicos para calibrar a leitura da câmera.</p>
+          </div>
+        </div>
+
+        <div class="cupons-filtros">
+          <div class="cupons-datas">
+            <button class="period-button audit-result active" data-result="">Todos</button>
+            <button class="period-button audit-result" data-result="OK">Aprovados</button>
+            <button class="period-button audit-result" data-result="SUSPEITO">Suspeitos IA</button>
+            <button class="period-button audit-result" data-result="SEM_DVR">Sem DVR</button>
+            <input type="date" id="auditIaDateInput" class="cupons-select" style="cursor:pointer">
+          </div>
+          <div class="cupons-filtros-linha">
+            <label class="search-box" style="flex:1;min-width:180px"><i data-lucide="search"></i>
+              <input id="auditIaSearchInput" placeholder="Produto, cupom, categoria ou motivo">
+            </label>
+            <button class="icon-button" id="btnAuditIaRefresh" title="Atualizar" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card)"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i></button>
+            <button class="icon-button" id="btnAuditIaClear" title="Limpar todos do dia" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--danger,#e53e3e)"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
+          </div>
+        </div>
+
+        <div class="alerts-panel" style="margin-top:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+            <div id="auditIaResumo" class="pipeline-history" style="margin-left:0"></div>
+          </div>
+          <div class="cupons-table-wrap">
+            <table class="alerts-table cupons-table" style="min-width:760px">
+              <thead>
+                <tr>
+                  <th style="width:32px"><input type="checkbox" class="row-sel" id="selAllAuditIa" title="Selecionar todos"></th>
+                  <th>Resultado</th>
+                  <th>Horário</th>
+                  <th>PDV / Cupom</th>
+                  <th>Análise Gemini</th>
+                  <th>Produto registrado</th>
+                  <th>Confiança</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="auditIaTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- View: PDV Cards (VAR) -->
+      <section class="workspace" id="viewPdvCards" style="display:none">
+
+        <!-- Estado 1: grid de cards -->
+        <div id="pdvCardsGrid">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">Operação</p>
+              <h1>PDVs</h1>
+              <p>Selecione um PDV para consultar cupons.</p>
+            </div>
+          </div>
+          <div class="pdv-cards" id="pdvCardsContainer"></div>
+        </div>
+
+        <!-- Estado 2: busca VAR -->
+        <div id="pdvVarSearch" style="display:none">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow" id="varBreadcrumb">—</p>
+              <h1>Consulta de cupom</h1>
+              <p>Digite o número do cupom para revisar os eventos registrados.</p>
+            </div>
+            <button class="icon-button" id="btnVoltarCards" title="Voltar" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card)"><i data-lucide="arrow-left" style="width:16px;height:16px"></i></button>
+          </div>
+
+          <!-- Formulário compacto -->
+          <div class="var-search-box">
+            <form id="formVarCupom">
+              <label class="var-search-label">Número do cupom
+                <input id="varCupomInput" type="text" placeholder="Ex: 221548 (opcional em Item específico)">
+              </label>
+              <div class="var-radio-group">
+                <label class="var-radio"><input type="radio" name="varTipo" value="all" checked><span>Compra inteira</span></label>
+                <label class="var-radio"><input type="radio" name="varTipo" value="item"><span>Item específico</span></label>
+              </div>
+              <div id="varItemField" style="display:none">
+                <label class="var-search-label">Nome ou código do produto
+                  <input id="varItemInput" type="text" placeholder="Ex: Café Maratá">
+                </label>
+              </div>
+              <button type="submit" class="primary-action var-search-btn"><i data-lucide="search"></i> Buscar</button>
+            </form>
+          </div>
+
+          <!-- Cupons do dia com seletor de data -->
+          <div style="margin-top:24px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+              <h3 style="font-size:14px;font-weight:700;color:var(--text);margin:0">Cupons do dia</h3>
+              <span id="varCuponsResumo" style="font-size:12px;color:var(--muted)"></span>
+            </div>
+            <div class="alerts-panel" style="margin:0">
+              <div class="table-wrap">
+                <table style="width:100%">
+                  <colgroup>
+                    <col style="width:7%"><col style="width:8%"><col style="width:14%">
+                    <col style="width:29%"><col style="width:7%"><col style="width:13%">
+                    <col style="width:9%"><col style="width:13%">
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>Horário</th>
+                      <th>Cupom</th>
+                      <th>Operador</th>
+                      <th>Item destaque</th>
+                      <th style="text-align:center">Itens</th>
+                      <th style="text-align:right">Total</th>
+                      <th style="text-align:center">IA</th>
+                      <th style="text-align:center">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody id="varCuponsBody">
+                    <tr class="empty-row"><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Carregando cupons…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- View: Consultar -->
+      <section class="workspace" id="viewConsultar" style="display:none">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Operação</p>
+            <h1>Consultas</h1>
+            <p>Itens consultados e selecionados manualmente no caixa.</p>
+          </div>
+        </div>
+
+        <!-- Filtros — idêntico ao padrão Cupons -->
+        <div class="cupons-filtros">
+          <div class="cupons-datas">
+            <button class="period-button cupons-quick consultar-quick active" data-days="0">Hoje</button>
+            <button class="period-button cupons-quick consultar-quick" data-days="1">Ontem</button>
+            <button class="period-button cupons-quick consultar-quick" data-days="2">Anteontem</button>
+            <input type="date" id="consultarDataInput" class="cupons-select" style="cursor:pointer">
+          </div>
+          <div class="cupons-filtros-linha">
+            <label class="search-box" style="flex:1"><i data-lucide="search"></i>
+              <input id="consultarSearch" placeholder="Buscar produto ou operador…">
+            </label>
+            <select id="consultarOperadorFilter" class="cupons-select">
+              <option value="">Todos os operadores</option>
+            </select>
+            <select id="consultarPeriodoFilter" class="cupons-select">
+              <option value="">Todo o dia</option>
+              <option value="manha">Manhã (06–12h)</option>
+              <option value="tarde">Tarde (12–18h)</option>
+              <option value="noite">Noite (18–23h)</option>
+            </select>
+            <button class="icon-button" id="btnConsultarRefresh" title="Atualizar" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card)"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i></button>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="consultarLoading" style="display:none;padding:40px;text-align:center;color:var(--muted)">
+          <i data-lucide="loader-circle" style="animation:spin 1s linear infinite;width:24px;height:24px"></i>
+          <p style="margin-top:8px">Carregando…</p>
+        </div>
+
+        <!-- Tabela — mesmo padrão da tela Cupons -->
+        <div class="alerts-panel" style="margin-top:0">
+          <div id="consultarTabelaConsultas" class="cupons-table-wrap">
+            <table class="cupons-table">
+              <colgroup>
+                <col style="width:7%">
+                <col style="width:8%">
+                <col style="width:26%">
+                <col style="width:12%">
+                <col style="width:14%">
+                <col style="width:8%">
+                <col style="width:11%">
+                <col style="width:11%">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Horário</th>
+                  <th>Cupom</th>
+                  <th>Produto consultado</th>
+                  <th>Código</th>
+                  <th>Operador</th>
+                  <th>Qtd.</th>
+                  <th style="text-align:right">Valor</th>
+                  <th style="text-align:center">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="consultarConsultasBody"></tbody>
+            </table>
+            <div id="consultarConsultasEmpty" style="display:none;padding:40px;text-align:center;color:var(--muted)">
+              Nenhuma consulta encontrada para esta data.
+            </div>
+          </div>
+          <div class="paginacao" id="consultarPaginacao" style="display:none">
+            <span id="consultarPaginacaoInfo"></span>
+            <div class="paginacao-btns" id="consultarPaginacaoBtns"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Modal vídeo de consulta -->
+      <!-- ── Monitor Técnico ── -->
+      <div id="monitorTecnicoModal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.5);backdrop-filter:blur(3px)" onclick="if(event.target===this) fecharMonitorTecnico()">
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border-radius:14px;width:min(580px,95vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:36px;height:36px;border-radius:8px;background:#eef6f2;color:var(--primary);display:flex;align-items:center;justify-content:center"><i data-lucide="activity" style="width:17px;height:17px"></i></div>
+              <div>
+                <div style="font-weight:700;font-size:15px">Monitor Técnico</div>
+                <div id="monitorPdvLabel" style="font-size:11px;color:var(--muted)">PDV 001 · Loja 106</div>
+              </div>
+            </div>
+            <button onclick="fecharMonitorTecnico()" style="background:none;border:none;cursor:pointer;padding:6px;color:var(--muted)"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+          </div>
+          <div id="monitorTecnicoBody" style="padding:20px;display:flex;flex-direction:column;gap:16px">
+            <div style="text-align:center;padding:32px;color:var(--muted)">
+              <i data-lucide="loader-circle" style="width:28px;height:28px;animation:spin 1s linear infinite"></i>
+              <p style="margin-top:8px;font-size:13px">Coletando diagnóstico…</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="liveCameraModal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.85);backdrop-filter:blur(4px)" onclick="if(event.target===this) fecharCameraAoVivo()">
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:16px;width:min(860px,96vw);max-height:94vh;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6)">
+
+          <!-- Imagem da câmera ocupa todo o espaço -->
+          <div style="position:relative;background:#000;line-height:0">
+            <img id="liveCameraImg" style="width:100%;display:block;max-height:90vh;object-fit:cover" alt="Câmera ao vivo">
+
+            <!-- Overlay topo: gradiente + info AO VIVO -->
+            <div style="position:absolute;top:0;left:0;right:0;padding:18px 18px 48px;background:linear-gradient(to bottom,rgba(0,0,0,.7) 0%,transparent 100%);display:flex;align-items:flex-start;justify-content:space-between">
+              <div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                  <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e03131;animation:liveBlink 1.2s infinite;flex-shrink:0"></span>
+                  <span style="font-size:11px;font-weight:700;color:#fff;letter-spacing:.08em;text-transform:uppercase">Ao vivo</span>
+                </div>
+                <div style="font-size:17px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.5)" id="liveCameraLabel">PDV 01</div>
+              </div>
+              <button onclick="fecharCameraAoVivo()" style="background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.15);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(4px)"><i data-lucide="x" style="width:16px;height:16px"></i></button>
+            </div>
+
+            <!-- Loading state -->
+            <div id="liveCameraLoading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9aa0a6;background:#000;min-height:380px">
+              <i data-lucide="loader-circle" style="width:36px;height:36px;animation:spin 1s linear infinite"></i>
+              <p style="margin-top:12px;font-size:13px">Conectando à câmera…</p>
+              <p style="margin-top:4px;font-size:11px;color:#555">pode levar até 20s na primeira vez</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <style>@keyframes liveBlink { 0%,100%{opacity:1} 50%{opacity:.2} }</style>
+
+      <div id="consultaVideoModal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.55);display:none">
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border-radius:12px;width:min(680px,96vw);max-height:90vh;overflow-y:auto;padding:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div>
+              <p style="font-size:11px;color:var(--muted);margin:0" id="cvmBreadcrumb">PDV 01</p>
+              <h2 style="margin:0;font-size:18px" id="cvmTitle">Item consultado</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:var(--muted)" id="cvmDesc"></p>
+            </div>
+            <button onclick="fecharConsultaVideoModal()" style="background:none;border:none;cursor:pointer;padding:4px"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+          </div>
+          <div id="cvmLoading" style="text-align:center;padding:40px;color:var(--muted)">
+            <i data-lucide="loader-circle" style="animation:spin 1s linear infinite;width:32px;height:32px"></i>
+            <p style="margin-top:8px">Carregando vídeo…</p>
+          </div>
+          <video id="cvmVideo" controls playsinline webkit-playsinline style="width:100%;border-radius:8px;display:none;background:#000"></video>
+          <div id="cvmErro" style="display:none;text-align:center;padding:24px">
+            <p style="color:var(--muted)">Não foi possível carregar o vídeo.</p>
+            <button class="primary-action" onclick="cvmTentarNovamente()" style="margin-top:8px">Tentar novamente</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- View: Cupons (lista do dia) -->
+      <section class="workspace" id="viewReceipts" style="display:none">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Operação</p>
+            <h1>Cupons do dia</h1>
+            <p>Todos os cupons gerados no PDV — clique para revisar.</p>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="cupons-filtros">
+          <div class="cupons-datas">
+            <button class="period-button cupons-quick" data-days="0">Hoje</button>
+            <button class="period-button cupons-quick" data-days="1">Ontem</button>
+            <button class="period-button cupons-quick" data-days="2">Anteontem</button>
+            <input type="date" id="cuponsDateInput" class="cupons-select" style="cursor:pointer">
+          </div>
+          <div class="cupons-filtros-linha">
+            <label class="search-box" style="flex:1"><i data-lucide="search"></i>
+              <input id="cuponsSearch" placeholder="Buscar cupom ou operador…">
+            </label>
+            <select id="cuponsOperadorFilter" class="cupons-select">
+              <option value="">Todos os operadores</option>
+            </select>
+            <select id="cuponsPeriodoFilter" class="cupons-select">
+              <option value="">Todo o dia</option>
+              <option value="manha">Manhã (06–12h)</option>
+              <option value="tarde">Tarde (12–18h)</option>
+              <option value="noite">Noite (18–23h)</option>
+            </select>
+            <button class="icon-button" id="btnCarregarCupons" title="Atualizar" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card)"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i></button>
+          </div>
+        </div>
+        <div class="alerts-panel" style="margin-top:0">
+          <div class="cupons-table-wrap">
+            <table class="cupons-table" id="cuponsTable">
+              <colgroup>
+                <col style="width:7%">
+                <col style="width:7%">
+                <col style="width:13%">
+                <col style="width:28%">
+                <col style="width:10%">
+                <col style="width:8%">
+                <col style="width:12%">
+                <col style="width:15%">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Horário</th>
+                  <th>Cupom</th>
+                  <th>Operador</th>
+                  <th>Item destaque</th>
+                  <th style="text-align:right">Valor item</th>
+                  <th style="text-align:center">Itens</th>
+                  <th style="text-align:right">Total</th>
+                  <th style="text-align:center">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="cuponsTableBody">
+                <tr class="empty-row"><td colspan="8">Selecione uma data para carregar os cupons.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="paginacao" id="cuponsPaginacao" style="display:none">
+            <span id="cuponsPaginacaoInfo"></span>
+            <div class="paginacao-btns" id="cuponsPaginacaoBtns"></div>
+          </div>
+          <div class="table-footer"><span id="cuponsFooter">—</span></div>
+        </div>
+      </section>
+
+      <!-- View: PDVs -->
+      <!-- View: Lojas -->
+      <section class="workspace" id="viewLojas" style="display:none">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Configurações</p>
+            <h1>Lojas</h1>
+            <p>Cadastre lojas e gere os tokens para o instalador PDV.</p>
+          </div>
+          <button class="primary-action" id="btnNovaLoja"><i data-lucide="plus"></i> Nova loja</button>
+        </div>
+        <div class="alerts-panel" style="margin-top:0">
+          <div class="table-wrap">
+            <table class="users-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>ID</th>
+                  <th>Descrição PDV</th>
+                  <th>Token</th>
+                  <th>Criado em</th>
+                  <th aria-label="Ações"></th>
+                </tr>
+              </thead>
+              <tbody id="lojasTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- View: Ocorrências -->
+      <section class="workspace" id="viewOcorrencias" style="display:none">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Auditoria visual</p>
+            <h1>Ocorrências</h1>
+            <p>Registros automáticos de itens aprovados e reprovados pela IA.</p>
+          </div>
+        </div>
+
+        <div class="cupons-filtros">
+          <div class="cupons-datas">
+            <button class="period-button ocorr-quick active" data-days="0">Hoje</button>
+            <button class="period-button ocorr-quick" data-days="1">Ontem</button>
+            <button class="period-button ocorr-quick" data-days="2">Anteontem</button>
+            <input type="date" id="ocorrDateInput" class="cupons-select" style="cursor:pointer">
+          </div>
+          <div class="cupons-filtros-linha">
+            <label class="search-box" style="flex:1;min-width:180px">
+              <i data-lucide="search"></i>
+              <input id="ocorrSearch" placeholder="Produto, cupom, PDV ou análise…">
+            </label>
+            <button class="icon-button" id="btnOcorrRefresh" title="Atualizar" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card)">
+              <i data-lucide="refresh-cw" style="width:16px;height:16px"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Abas Aprovada / Reprovada -->
+        <div class="alert-tabs" id="ocorrTabs" style="margin-bottom:0">
+          <button class="active" data-ocorr="aprovada">
+            <i data-lucide="check-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>
+            Aprovadas <span id="ocorrCountAprov">0</span>
+          </button>
+          <button data-ocorr="reprovada">
+            <i data-lucide="triangle-alert" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>
+            Reprovadas <span id="ocorrCountReprov">0</span>
+          </button>
+        </div>
+
+        <!-- Cards de ocorrências -->
+        <div id="ocorrCards" class="ocorr-cards-grid" style="margin-top:16px"></div>
+        <div id="ocorrEmpty" style="display:none;padding:48px;text-align:center;color:var(--muted)">
+          <i data-lucide="inbox" style="width:32px;height:32px;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto"></i>
+          <p>Nenhuma ocorrência encontrada.</p>
+        </div>
+      </section>
+
+      <!-- View: Relatórios -->
+      <section class="workspace" id="viewReports" style="display:none">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Análise</p>
+            <h1>Relatórios</h1>
+            <p id="rptSubtitulo">Visão consolidada das operações e auditoria IA.</p>
+          </div>
+          <button class="icon-button" id="btnImprimirRelatorio" title="Imprimir / Salvar PDF" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card)">
+            <i data-lucide="printer" style="width:16px;height:16px"></i>
+          </button>
+        </div>
+
+        <!-- KPIs do dia -->
+        <div class="rpt-kpis" id="rptKpis"></div>
+
+        <div class="rpt-grid">
+          <!-- Vendas por hora -->
+          <div class="rpt-card rpt-card--wide">
+            <div class="rpt-card-header">
+              <i data-lucide="bar-chart-2"></i>
+              <h3>Vendas por hora</h3>
+            </div>
+            <div class="rpt-chart-bars" id="rptVendasHora"></div>
+          </div>
+
+          <!-- Top operadores -->
+          <div class="rpt-card">
+            <div class="rpt-card-header">
+              <i data-lucide="users"></i>
+              <h3>Operadores</h3>
+            </div>
+            <div id="rptOperadores"></div>
+          </div>
+
+          <!-- IA por categoria -->
+          <div class="rpt-card">
+            <div class="rpt-card-header">
+              <i data-lucide="cpu"></i>
+              <h3>Alertas por categoria</h3>
+            </div>
+            <div id="rptAlertasCat"></div>
+          </div>
+
+          <!-- Produtos mais alertados -->
+          <div class="rpt-card rpt-card--wide">
+            <div class="rpt-card-header">
+              <i data-lucide="triangle-alert"></i>
+              <h3>Produtos mais alertados</h3>
+            </div>
+            <div id="rptProdutos"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── View: Config Loja & PDVs ─────────────────────────────────────── -->
+      <section class="workspace" id="viewConfigLoja" style="display:none">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Configurações</p>
+            <h1>Loja &amp; PDVs</h1>
+            <p>Identidade da loja e operadores cadastrados.</p>
+          </div>
+        </div>
+        <div class="config-page">
+          <div class="config-section">
+            <h3>Identidade</h3>
+            <div class="config-field">
+              <label>Nome da loja</label>
+              <input id="cfgLojaNome" type="text" maxlength="120" placeholder="Ex: Supermercado Centro">
+            </div>
+            <div class="config-field">
+              <label>Ambiente</label>
+              <select id="cfgLojaAmbiente">
+                <option value="Produção">Produção</option>
+                <option value="Teste">Teste</option>
+                <option value="Homologação">Homologação</option>
+              </select>
+            </div>
+          </div>
+          <div class="config-section">
+            <h3>Operadores do Caixa</h3>
+            <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Nomes como aparecem no spy file. Separe por vírgula.</p>
+            <div class="config-field">
+              <label>Operadores</label>
+              <textarea id="cfgLojaOperadores" rows="3" placeholder="JOAO SILVA, MARIA COSTA, PEDRO ALVES"></textarea>
+            </div>
+          </div>
+          <div class="config-save-bar">
+            <button onclick="salvarConfigLoja()"><i data-lucide="save" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i>Salvar</button>
+            <span class="config-hint">Alterações entram em vigor imediatamente no dashboard.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── View: Config Auditoria IA ─────────────────────────────────────── -->
+      <section class="workspace" id="viewConfigAuditoria" style="display:none">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Configurações</p>
+            <h1>Auditoria IA</h1>
+            <p>Pipeline de análise de imagem por inteligência artificial.</p>
+          </div>
+        </div>
+        <div class="config-page">
+          <div id="cfgAuditTabs"></div>
+          <div class="config-section">
+            <h3>Pipeline</h3>
+            <div class="config-toggle-row">
+              <div><span>Auditoria ativada</span><small>Liga/desliga toda a análise por IA</small></div>
+              <label class="cfg-switch"><input type="checkbox" id="cfgAudEnabled"><span class="cfg-switch-track"></span></label>
+            </div>
+            <div class="config-toggle-row">
+              <div><span>Modo automático</span><small>Analisa todos os cupons automaticamente</small></div>
+              <label class="cfg-switch"><input type="checkbox" id="cfgAudModoAuto"><span class="cfg-switch-track"></span></label>
+            </div>
+            <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap">
+              <div class="config-field" style="flex:1;min-width:140px">
+                <label>Valor mínimo do item (R$)</label>
+                <input id="cfgAudValorMin" type="number" min="0" step="0.01" placeholder="20.00">
+              </div>
+              <div class="config-field" style="flex:1;min-width:140px">
+                <label>Máx análises de cupons por hora</label>
+                <input id="cfgAudMaxHora" type="number" min="1" max="10000" placeholder="60">
+              </div>
+              <div class="config-field" style="flex:1;min-width:140px">
+                <label>Fotos por cupom</label>
+                <input id="cfgAudFotosPorCupom" type="number" min="1" max="50" placeholder="3">
+              </div>
+            </div>
+          </div>
+          <div class="config-section">
+            <h3>Provedor de IA</h3>
+            <div class="config-field">
+              <label>Provedor</label>
+              <select id="cfgAudProvedor">
+                <option value="gemini">Google Gemini</option>
+              </select>
+            </div>
+            <div class="config-field">
+              <label>API Key (Gemini)</label>
+              <input id="cfgAudApiKey" type="password" maxlength="256" placeholder="AIzaSy…">
+            </div>
+            <div class="config-field">
+              <label>Modelo</label>
+              <input id="cfgAudModelo" type="text" maxlength="128" placeholder="gemini-2.5-flash">
+            </div>
+            <div class="config-field">
+              <label>Confiança mínima para alertar (%)</label>
+              <input id="cfgAudConfianca" type="number" min="0" max="100" placeholder="70">
+            </div>
+          </div>
+          <div class="config-section">
+            <h3>Prompt personalizado</h3>
+            <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Deixe em branco para usar o prompt padrão do sistema.</p>
+            <div class="config-field">
+              <textarea id="cfgAudPrompt" rows="6" placeholder="Analise a imagem e identifique o produto registrado no cupom fiscal..."></textarea>
+            </div>
+          </div>
+          <div class="config-save-bar">
+            <button onclick="salvarConfigAuditoria()"><i data-lucide="save" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i>Salvar</button>
+            <span class="config-hint">Aplicado ao PDV em até 2 minutos pelo sync.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── View: Config Câmera DVR ───────────────────────────────────────── -->
+      <section class="workspace" id="viewConfigCamera" style="display:none">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Configurações</p>
+            <h1>Câmera (DVR)</h1>
+            <p>Conexão com o gravador digital e parâmetros de captura.</p>
+          </div>
+        </div>
+        <div class="config-page">
+          <div id="cfgCamTabs"></div>
+          <div class="config-section">
+            <h3>Conexão DVR</h3>
+            <div class="config-field">
+              <label>Host / IP do iMHDX</label>
+              <input id="cfgCamHost" type="text" maxlength="256" placeholder="192.168.24.227">
+            </div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap">
+              <div class="config-field" style="flex:1;min-width:140px">
+                <label>Usuário</label>
+                <input id="cfgCamUser" type="text" maxlength="64" placeholder="admin">
+              </div>
+              <div class="config-field" style="flex:1;min-width:140px">
+                <label>Senha</label>
+                <input id="cfgCamPass" type="password" maxlength="256" placeholder="••••••••">
+              </div>
+            </div>
+            <div class="config-field">
+              <label>Canal de vídeo</label>
+              <input id="cfgCamChannel" type="number" min="1" max="32" placeholder="1">
+            </div>
+          </div>
+          <div class="config-section">
+            <h3>Captura</h3>
+            <div style="display:flex;gap:16px;flex-wrap:wrap">
+              <div class="config-field" style="flex:1;min-width:140px">
+                <label>Delay da foto após bipe (seg)</label>
+                <input id="cfgCamPhotoDelay" type="number" min="0" max="300" placeholder="6">
+              </div>
+              <div class="config-field" style="flex:1;min-width:140px">
+                <label>Duração do clipe de vídeo (seg)</label>
+                <input id="cfgCamClipDur" type="number" min="5" max="600" placeholder="30">
+              </div>
+            </div>
+          </div>
+          <div class="config-section">
+            <h3>Região de interesse (ROI)</h3>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Marque com o mouse o quadrado da cena que deve ser analisado. Apenas essa área será enviada ao modelo de visão.</p>
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+              <button type="button" class="btn-secondary" onclick="cfgCamCarregarSnapshot()" id="cfgCamSnapshotBtn">
+                <i data-lucide="camera" style="width:15px;height:15px;vertical-align:middle;margin-right:5px"></i>Carregar snapshot ao vivo
+              </button>
+              <button type="button" class="btn-secondary" onclick="cfgCamLimparROI()" id="cfgCamClearBtn" style="display:none">
+                <i data-lucide="x" style="width:15px;height:15px;vertical-align:middle;margin-right:5px"></i>Limpar ROI
+              </button>
+              <span id="cfgCamROICoords" style="font-size:12px;color:var(--muted);font-family:monospace"></span>
+            </div>
+            <div id="cfgCamCanvasWrap" style="position:relative;display:inline-block;max-width:100%;overflow:hidden;border-radius:8px;border:1.5px solid var(--border);background:#111;display:none">
+              <canvas id="cfgCamCanvas" style="display:block;max-width:100%;cursor:crosshair;user-select:none"></canvas>
+            </div>
+            <input type="hidden" id="cfgCamRoiX">
+            <input type="hidden" id="cfgCamRoiY">
+            <input type="hidden" id="cfgCamRoiW">
+            <input type="hidden" id="cfgCamRoiH">
+          </div>
+          <div class="config-save-bar">
+            <button onclick="salvarConfigCamera()"><i data-lucide="save" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i>Salvar</button>
+            <span class="config-hint">Aplicado ao PDV em até 2 minutos pelo sync.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── View: Config Notificações ─────────────────────────────────────── -->
+      <section class="workspace" id="viewConfigNotificacoes" style="display:none">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Configurações</p>
+            <h1>Notificações</h1>
+            <p>Bot Telegram e preferências de envio de alertas.</p>
+          </div>
+        </div>
+        <div class="config-page">
+          <div class="config-section">
+            <h3>Bot Telegram</h3>
+            <div class="config-field">
+              <label>Token do bot</label>
+              <input id="cfgNotiToken" type="password" maxlength="256" placeholder="123456789:AAFxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+            </div>
+            <div class="config-field">
+              <label>Chat ID</label>
+              <input id="cfgNotiChatId" type="text" maxlength="64" placeholder="-100123456789">
+            </div>
+          </div>
+          <div class="config-section">
+            <h3>Filtros de Alerta</h3>
+            <div class="config-toggle-row">
+              <div><span>Alertas ativados</span><small>Envia mensagens no Telegram para novos alertas</small></div>
+              <label class="cfg-switch"><input type="checkbox" id="cfgNotiEnabled"><span class="cfg-switch-track"></span></label>
+            </div>
+            <div class="config-field" style="margin-top:14px">
+              <label>Severidade mínima para notificar</label>
+              <select id="cfgNotiSev">
+                <option value="critical">Somente Crítico</option>
+                <option value="warning">Atenção e Crítico</option>
+                <option value="ok">Todos</option>
+              </select>
+            </div>
+          </div>
+          <div class="config-section">
+            <h3>Horário Silencioso</h3>
+            <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Nenhuma notificação será enviada neste intervalo.</p>
+            <div style="display:flex;gap:16px;flex-wrap:wrap">
+              <div class="config-field" style="flex:1;min-width:120px">
+                <label>Das</label>
+                <input id="cfgNotiSilStart" type="time">
+              </div>
+              <div class="config-field" style="flex:1;min-width:120px">
+                <label>Até</label>
+                <input id="cfgNotiSilEnd" type="time">
+              </div>
+            </div>
+          </div>
+          <div class="config-save-bar">
+            <button onclick="salvarConfigNotificacoes()"><i data-lucide="save" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i>Salvar</button>
+            <span class="config-hint">Alterações entram em vigor imediatamente.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Manutenção ── -->
+      <section class="workspace" id="viewManutencao" style="display:none">
+        <div class="page-header">
+          <h1><i data-lucide="wrench" style="width:22px;height:22px;vertical-align:middle;margin-right:8px"></i>Manutenção</h1>
+        </div>
+
+        <div class="manut-grid">
+          <!-- Card: Sincronização de Relógio -->
+          <div class="manut-card">
+            <div class="manut-card-header">
+              <i data-lucide="clock-4" style="width:18px;height:18px"></i>
+              <span>Sincronização de Relógio DVR / PDV</span>
+            </div>
+            <div class="manut-clocks">
+              <div class="manut-clock-item">
+                <div class="manut-clock-label">PDV1 (sistema)</div>
+                <div class="manut-clock-value" id="manutPdvTime">--:--:--</div>
+                <div class="manut-clock-date" id="manutPdvDate">--/--/----</div>
+              </div>
+              <div class="manut-clock-sep">
+                <div id="manutOffsetBadge" class="manut-offset-badge manut-offset-unknown">? s</div>
+              </div>
+              <div class="manut-clock-item">
+                <div class="manut-clock-label">DVR iMHDX</div>
+                <div class="manut-clock-value" id="manutDvrTime">--:--:--</div>
+                <div class="manut-clock-date" id="manutDvrDate">--/--/----</div>
+              </div>
+            </div>
+            <div class="manut-status-row">
+              <span class="manut-last-cal" id="manutLastCal">Aguardando leitura…</span>
+              <button class="manut-btn-refresh" id="manutBtnRefresh" onclick="manutRefreshClocks()">
+                <i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Atualizar
+              </button>
+            </div>
+            <div class="manut-sync-row">
+              <button class="btn-primary manut-btn-sync" id="manutBtnSync" onclick="manutSyncDvr()">
+                <i data-lucide="zap" style="width:15px;height:15px;vertical-align:middle;margin-right:5px"></i>
+                Sincronizar DVR com PDV agora
+              </button>
+            </div>
+            <div class="manut-result" id="manutSyncResult" style="display:none"></div>
+          </div>
+
+          <!-- Card: Calibração de Snapshots -->
+          <div class="manut-card">
+            <div class="manut-card-header">
+              <i data-lucide="image-off" style="width:18px;height:18px"></i>
+              <span>Calibração de Snapshots</span>
+            </div>
+            <p class="manut-card-desc">Verifica se as fotos armazenadas batem com o instante exato do bip. Se estiverem desalinhadas, refaz todos os snapshots do DVR.</p>
+
+            <div class="manut-snap-actions">
+              <button class="manut-btn-secondary" id="manutBtnAudit" onclick="manutAuditSnapshots()">
+                <i data-lucide="search" style="width:14px;height:14px;vertical-align:middle;margin-right:5px"></i>
+                Verificar amostra (últimos 20)
+              </button>
+              <button class="btn-primary manut-btn-sync" id="manutBtnRecal" onclick="manutRecalibrateSnapshots()">
+                <i data-lucide="refresh-cw" style="width:15px;height:15px;vertical-align:middle;margin-right:5px"></i>
+                Re-calibrar todos os snapshots
+              </button>
+            </div>
+
+            <!-- Resultado da verificação -->
+            <div id="manutAuditResult" style="display:none" class="manut-audit-result"></div>
+
+            <!-- Progresso da recalibração -->
+            <div id="manutRecalProgress" style="display:none" class="manut-recal-progress">
+              <div class="manut-recal-bar-wrap">
+                <div class="manut-recal-bar" id="manutRecalBar" style="width:0%"></div>
+              </div>
+              <div class="manut-recal-info" id="manutRecalInfo">Iniciando…</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal: Criar / Editar usuário -->
+  <div id="modalUsuario" class="modal-backdrop" style="display:none">
+    <div class="user-modal">
+      <div class="modal-header">
+        <div><p class="eyebrow">Controle de acesso</p><h2 id="modalUsuarioTitulo">Novo usuário</h2></div>
+        <button id="closeModalUsuario" class="icon-button"><i data-lucide="x"></i></button>
+      </div>
+      <form id="formUsuario">
+        <div class="form-row">
+          <label>Nome completo<input id="uNome" type="text" required placeholder="Ex: João Silva"></label>
+          <label>E-mail<input id="uEmail" type="email" required placeholder="joao@empresa.com"></label>
+        </div>
+        <div class="form-row">
+          <label>Perfil
+            <select id="uPerfil" required>
+              <option value="">Selecione...</option>
+              <option value="admin">Administrador</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="operador">Operador</option>
+            </select>
+          </label>
+          <label>Loja (ID)
+            <input id="uLoja" type="text" placeholder="loja-106 (vazio = acesso global)">
+          </label>
+        </div>
+        <label id="uSenhaLabel">Senha<input id="uSenha" type="password" placeholder="Mínimo 6 caracteres"></label>
+        <p id="modalUsuarioErro" class="login-error" hidden></p>
+        <div class="modal-actions">
+          <button type="button" id="cancelarModalUsuario" class="secondary-action">Cancelar</button>
+          <button type="submit" class="primary-action" id="salvarUsuarioBtn">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Trocar senha -->
+  <div id="modalSenha" class="modal-backdrop" style="display:none">
+    <div class="user-modal" style="max-width:380px">
+      <div class="modal-header">
+        <div><p class="eyebrow">Segurança</p><h2>Redefinir senha</h2></div>
+        <button id="closeModalSenha" class="icon-button"><i data-lucide="x"></i></button>
+      </div>
+      <form id="formSenha">
+        <p id="modalSenhaNome" style="margin:0 0 16px;font-weight:600"></p>
+        <label>Nova senha<input id="novaSenha" type="password" required placeholder="Mínimo 6 caracteres" minlength="6"></label>
+        <p id="modalSenhaErro" class="login-error" hidden></p>
+        <div class="modal-actions">
+          <button type="button" id="cancelarModalSenha" class="secondary-action">Cancelar</button>
+          <button type="submit" class="primary-action">Salvar senha</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Nova/Editar Loja -->
+  <div id="modalLoja" class="modal-backdrop" style="display:none">
+    <div class="user-modal" style="max-width:440px">
+      <div class="modal-header">
+        <div><p class="eyebrow">Configurações</p><h2 id="modalLojaTitulo">Nova loja</h2></div>
+        <button id="closeModalLoja" class="icon-button"><i data-lucide="x"></i></button>
+      </div>
+      <form id="formLoja">
+        <label>ID da loja <small style="color:var(--muted)">(ex: loja-centro, pdv-norte)</small>
+          <input id="lId" type="text" required placeholder="loja-001" pattern="[A-Za-z0-9_-]+" maxlength="64">
+        </label>
+        <label>Nome
+          <input id="lNome" type="text" required placeholder="Supermercado Centro" maxlength="120">
+        </label>
+        <label>Descrição PDV <small style="color:var(--muted)">(opcional)</small>
+          <input id="lPdvNome" type="text" placeholder="PDV Frente de Loja" maxlength="120">
+        </label>
+        <p id="modalLojaErro" class="login-error" hidden></p>
+        <div class="modal-actions">
+          <button type="button" id="cancelarModalLoja" class="secondary-action">Cancelar</button>
+          <button type="submit" class="primary-action" id="btnSalvarLoja">Criar loja</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Token da loja (criação/regeneração) -->
+  <div id="modalLojaToken" class="modal-backdrop" style="display:none">
+    <div class="user-modal" style="max-width:480px">
+      <div class="modal-header">
+        <div><p class="eyebrow">Instalação</p><h2 id="modalLojaTokenTitulo">Token gerado</h2></div>
+        <button id="closeModalLojaToken" class="icon-button"><i data-lucide="x"></i></button>
+      </div>
+      <p id="modalLojaTokenDesc" style="margin:0 0 8px;font-size:13px;color:var(--muted)">Token de acesso da loja. Guarde em local seguro.</p>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+        <code id="lojaTokenValor" style="flex:1;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;word-break:break-all"></code>
+        <button id="btnCopiarLojaToken" class="secondary-action" style="white-space:nowrap"><i data-lucide="copy"></i> Copiar</button>
+      </div>
+      <div id="lojaTokenInstalador" style="background:#f0fff4;border:1px solid #b2f2bb;border-radius:8px;padding:12px;font-size:13px;margin-bottom:16px">
+        Loja criada com sucesso. Configure o instalador PDV para conectar a estação ao sistema.
+      </div>
+      <div class="modal-actions">
+        <button id="fecharModalLojaToken" class="secondary-action">Fechar</button>
+        <button id="btnAbrirInstalador" class="primary-action"><i data-lucide="terminal"></i> Configurar instalador PDV</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Instalador PDV -->
+  <div id="modalInstalador" class="modal-backdrop" style="display:none">
+    <div class="user-modal" style="max-width:600px;max-height:90vh;overflow-y:auto">
+      <div class="modal-header">
+        <div><p class="eyebrow">Instalação</p><h2>Instalador PDV</h2></div>
+        <button id="closeModalInstalador" class="icon-button"><i data-lucide="x"></i></button>
+      </div>
+
+      <!-- Token da loja -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px">
+        <p style="font-size:11px;color:var(--muted);margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em">Token API da loja</p>
+        <div style="display:flex;gap:8px;align-items:center">
+          <code id="instToken" style="flex:1;font-size:11px;word-break:break-all;color:var(--text)"></code>
+          <button id="btnCopiarInstToken" class="secondary-action" style="white-space:nowrap;padding:4px 10px;font-size:12px"><i data-lucide="copy" style="width:13px;height:13px"></i></button>
+        </div>
+      </div>
+
+      <!-- DVR -->
+      <p style="font-size:12px;font-weight:600;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Câmera DVR iMHDX</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <label>IP do DVR <input id="instDvrHost" type="text" placeholder="192.168.24.227" value="192.168.24.227"></label>
+        <label>Usuário <input id="instDvrUser" type="text" placeholder="admin" value="admin"></label>
+        <label>Senha <input id="instDvrPass" type="text" placeholder="Senha do DVR"></label>
+        <label>Canal <input id="instDvrChannel" type="number" min="1" max="32" value="1"></label>
+        <label>Porta UDP overlay <small style="color:var(--muted)">(texto no vídeo)</small>
+          <input id="instDvrUdpPort" type="number" min="1" max="65535" value="5001">
+        </label>
+      </div>
+
+      <!-- PDV -->
+      <p style="font-size:12px;font-weight:600;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Estação PDV</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <label>Número da estação <input id="instStation" type="text" placeholder="001" value="001"></label>
+        <label>Dir. spy files <input id="instBaseDir" type="text" placeholder="/home/rpdv/frente" value="/home/rpdv/frente"></label>
+      </div>
+
+      <!-- IA -->
+      <p style="font-size:12px;font-weight:600;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Auditoria IA <small style="font-weight:400;text-transform:none">(opcional — configure depois no dashboard)</small></p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <label>Chave Gemini <input id="instGeminiKey" type="text" placeholder="AIza..."></label>
+        <label>Chave Groq <input id="instGroqKey" type="text" placeholder="gsk_..."></label>
+      </div>
+
+      <!-- Telegram -->
+      <details style="margin-bottom:16px">
+        <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;user-select:none">
+          Telegram <small style="font-weight:400;text-transform:none">(opcional)</small>
+        </summary>
+        <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label>Bot Token <input id="instTgToken" type="text" placeholder="123456789:AAAA..."></label>
+          <label>Chat ID <input id="instTgChat" type="text" placeholder="-100123456789"></label>
+        </div>
+      </details>
+
+      <!-- Comando gerado -->
+      <div id="instCmdBox" style="display:none;background:#0d1117;border-radius:8px;padding:14px;margin-bottom:16px;position:relative">
+        <p style="margin:0 0 10px;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em">Cole como root no servidor Linux do PDV:</p>
+        <code id="instCmd" style="font-size:11px;color:#7ee787;white-space:pre-wrap;word-break:break-all;display:block;line-height:1.6"></code>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btnGerarInstalador" class="primary-action"><i data-lucide="terminal"></i> Gerar comando</button>
+        <button id="btnCopiarInstalador" class="secondary-action" style="display:none"><i data-lucide="copy"></i> Copiar comando</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="drawerBackdrop" class="drawer-backdrop"></div>
+  <aside id="alertDrawer" class="alert-drawer" aria-hidden="true">
+    <div class="drawer-header">
+      <div>
+        <p class="eyebrow">Auditoria IA · <span id="drawerPdvLabel">PDV 01</span></p>
+        <h2 id="drawerTitle">Detalhe do alerta</h2>
+      </div>
+      <button id="closeDrawer" class="icon-button" aria-label="Fechar"><i data-lucide="x"></i></button>
+    </div>
+    <div class="drawer-body">
+
+      <!-- 1. Foto / vídeo do momento do bip -->
+      <div class="evidence-main">
+        <img id="mainEvidence" src="assets/frame-register.svg" alt="Câmera do caixa">
+        <video id="drawerVideo" controls playsinline webkit-playsinline
+               style="display:none;width:100%;height:auto;background:#000"></video>
+        <div id="drawerVideoLoading" style="display:none;position:absolute;inset:0;background:#000;align-items:center;justify-content:center;flex-direction:column;color:#fff;gap:8px">
+          <i data-lucide="loader-circle" style="width:32px;height:32px;animation:spin 1s linear infinite"></i>
+          <span style="font-size:12px">Gerando vídeo…</span>
+        </div>
+        <span hidden id="drawerCameraLabel"></span>
+        <span hidden id="cameraTime"></span>
+      </div>
+
+      <div class="drawer-content">
+
+        <!-- 2. Diagnóstico da IA -->
+        <div class="ia-diagnostico">
+          <div class="ia-diagnostico-header">
+            <i data-lucide="cpu"></i>
+            <strong>Por que a IA sinalizou?</strong>
+            <span id="resultBadge" class="result-badge danger">Divergência</span>
+          </div>
+          <div class="ia-diagnostico-body">
+            <div class="ia-linha-stack">
+              <span class="ia-label">Produto registrado no cupom</span>
+              <span id="iaProdutoRegistrado" class="ia-valor">—</span>
+            </div>
+            <div class="ia-linha-stack">
+              <span class="ia-label">O que o Gemini viu</span>
+              <span id="iaSmolvlm" class="ia-valor">—</span>
+            </div>
+            <div class="ia-linha-stack ia-obs" id="iaObsLinha" style="display:none">
+              <span class="ia-label">Observação</span>
+              <span id="iaObs" class="ia-valor">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Dados do item -->
+        <dl class="event-data">
+          <div><dt>Produto</dt><dd id="detailProduct">—</dd></div>
+          <div><dt>Valor</dt><dd id="detailValue">—</dd></div>
+          <div><dt>Quantidade</dt><dd id="detailQuantity">—</dd></div>
+          <div><dt>Cupom</dt><dd id="detailReceipt">—</dd></div>
+          <div><dt>PDV</dt><dd id="detailPdv">—</dd></div>
+          <div><dt>Horário</dt><dd id="detailTime">—</dd></div>
+        </dl>
+
+      </div>
+    </div>
+    <div class="drawer-actions">
+      <button id="videoButton" class="secondary-action"><i data-lucide="play"></i>Ver vídeo</button>
+      <button id="saveButton" class="primary-action"><i data-lucide="bookmark-check"></i>Confirmar alerta</button>
+      <button id="ignoreButton" class="ghost-action"><i data-lucide="circle-slash"></i>Ignorar</button>
+    </div>
+  </aside>
+
+  <div id="varDrawerBackdrop" class="drawer-backdrop"></div>
+  <aside id="varDrawer" class="var-drawer" aria-hidden="true">
+    <div class="drawer-header">
+      <div>
+        <p class="eyebrow" id="varResultModalBreadcrumb">—</p>
+        <h2 id="varResultModalTitle">Cupom 221548</h2>
+      </div>
+      <button id="closeVarResult" class="icon-button" aria-label="Fechar"><i data-lucide="x"></i></button>
+    </div>
+    <div class="var-tab-bar">
+      <button class="var-tab active" data-tab="fotos"><i data-lucide="images"></i>Fotos</button>
+      <button class="var-tab" data-tab="video"><i data-lucide="play-circle"></i>Vídeo</button>
+    </div>
+    <div id="varResultModalBody" class="var-result-body">
+      <!-- rendered by JS -->
+    </div>
+  </aside>
+
+  <div id="videoModal" class="modal-backdrop">
+    <div class="video-modal">
+      <div class="modal-header"><div><p class="eyebrow">Gravação POS · iMHDX</p><h2>Vídeo do evento</h2></div><button id="closeVideo" class="icon-button"><i data-lucide="x"></i></button></div>
+      <div class="video-simulation">
+        <video id="eventVideo" controls playsinline webkit-playsinline preload="metadata"></video>
+        <div id="videoUnavailable" class="video-unavailable" hidden>Vídeo não disponível para este evento.</div>
+        <div class="video-meta"><span id="videoMeta">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drawer: Cupom Receipt -->
+  <div id="receiptDrawerBackdrop" class="drawer-backdrop"></div>
+  <aside id="receiptDrawer" class="var-drawer" aria-hidden="true">
+    <div class="drawer-header">
+      <div>
+        <p class="eyebrow" id="receiptDrawerEyebrow">—</p>
+        <h2 id="receiptDrawerTitle">Cupom —</h2>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="btnImprimirCupom" class="icon-button" title="Imprimir" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card)">
+          <i data-lucide="printer" style="width:16px;height:16px"></i>
+        </button>
+        <button id="closeReceiptDrawer" class="icon-button" aria-label="Fechar" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card)">
+          <i data-lucide="x" style="width:16px;height:16px"></i>
+        </button>
+      </div>
+    </div>
+    <div id="receiptDrawerBody" class="var-result-body" style="font-size:13px">
+      <!-- preenchido por JS -->
+    </div>
+  </aside>
+
+  <div id="toast" class="toast"><i data-lucide="circle-check"></i><span>Ocorrência salva.</span></div>
+
+  <!-- Modal: auditar por intervalo -->
+  <div id="modalAuditarIntervalo" class="modal-backdrop" style="display:none">
+    <div class="user-modal" style="max-width:420px">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Pipeline de auditoria</p>
+          <h2>Auditar por período</h2>
+        </div>
+        <button class="icon-button" onclick="fecharModalAuditarIntervalo()"><i data-lucide="x"></i></button>
+      </div>
+      <div style="padding:20px 24px">
+        <div class="config-field">
+          <label>Data</label>
+          <input type="date" id="auditIntData">
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:18px">
+          <div class="config-field" style="flex:1;margin-bottom:0">
+            <label>Hora inicial</label>
+            <input type="time" id="auditIntInicio" value="08:00">
+          </div>
+          <div class="config-field" style="flex:1;margin-bottom:0">
+            <label>Hora final</label>
+            <input type="time" id="auditIntFim" value="22:00">
+          </div>
+        </div>
+        <div id="auditIntStatus" style="font-size:13px;color:var(--muted);margin-bottom:14px;min-height:20px"></div>
+        <div id="auditIntProgressWrap" style="display:none;margin-bottom:14px">
+          <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden">
+            <div id="auditIntProgressBar" style="height:100%;background:var(--primary);width:0%;transition:width 0.5s"></div>
+          </div>
+          <div id="auditIntProgressLabel" style="font-size:12px;color:var(--muted);margin-top:4px;text-align:center"></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="fecharModalAuditarIntervalo()">Fechar</button>
+          <button id="btnAuditarIntervalo" class="btn-primary" onclick="auditarIntervaloExecutar()">
+            <i data-lucide="play" style="width:14px;height:14px"></i>Iniciar auditoria
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: confirmar zerar pipeline -->
+  <div id="modalZerarPipeline" class="modal-backdrop" style="display:none">
+    <div class="user-modal" style="max-width:400px">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Atenção</p>
+          <h2>Zerar pipeline?</h2>
+        </div>
+        <button class="icon-button" onclick="document.getElementById('modalZerarPipeline').style.display='none'"><i data-lucide="x"></i></button>
+      </div>
+      <div style="padding:20px 24px">
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--danger-soft);border-radius:10px;margin-bottom:20px">
+          <i data-lucide="triangle-alert" style="color:var(--danger);width:20px;height:20px;flex-shrink:0;margin-top:1px"></i>
+          <p style="margin:0;font-size:13px;color:var(--text)">
+            Zera os contadores de hoje e marca todos os cupons como já processados.<br>
+            <span style="color:var(--muted)">Novos cupons continuarão sendo auditados normalmente.</span>
+          </p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="document.getElementById('modalZerarPipeline').style.display='none'">Cancelar</button>
+          <button id="btnZerarConfirmar" class="btn-danger" onclick="zerarPipelineExecutar()">
+            <i data-lucide="trash-2" style="width:14px;height:14px"></i>Confirmar reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js?v=66"></script>
+</body>
+</html>

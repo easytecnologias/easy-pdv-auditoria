@@ -1,0 +1,18 @@
+[Unit]
+Description=PDV1 Video Streamer iMHDX
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+EnvironmentFile=/etc/pdv-telegram-assistant.env
+EnvironmentFile=-/etc/pdv-video-streamer.env
+Environment=IMHDX_HOST=192.168.24.227
+Environment=IMHDX_USER=admin
+Environment=IMHDX_CHANNEL=1
+Environment=VIDEO_STREAMER_PORT=8765
+ExecStart=/usr/bin/python3.8 /opt/pdv-visual-auditor/video_streamer.py
+
+[Install]
+WantedBy=multi-user.target

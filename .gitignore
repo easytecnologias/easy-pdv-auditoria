@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Env e segredos
+.env
+*.env
+!*.env.example
+
+# Banco
+*.db
+*.sqlite3
+
+# Docker volumes
+postgres_data/
+
+# Logs e temporários
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dashboard config local (tem token real)
+dashboard/config.js
