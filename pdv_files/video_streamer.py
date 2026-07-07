@@ -1748,9 +1748,11 @@ def _range_stats_update(cupom_num, result, data_str):
             alertas = result.get("alertas", 0)
             inc     = result.get("inconclusivos", 0)
             itens   = result.get("itens_analisados", 0)
-            if alertas > 0:   status = "SUSPEITO"
-            elif inc == itens: status = "INCONCLUSIVO"
-            else:              status = "OK"
+            ok_itens = result.get("ok", 0)
+            # Divergencia de categoria isolada NAO torna o cupom suspeito (politica de
+            # falsos positivos). Suspeito real exigiria evidencia temporal, ainda ausente.
+            if ok_itens > 0:   status = "OK"
+            else:              status = "INCONCLUSIVO"
             total = itens
         else:
             status = "SEM_DVR" if not result else "OK"
