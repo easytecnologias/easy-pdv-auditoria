@@ -1005,7 +1005,7 @@ document.querySelectorAll(".nav-group-toggle").forEach(toggle => {
   });
 });
 
-const VIEWS = ["viewUsers", "viewLojas", "viewPdvCards", "viewReceipts", "viewConsultar", "viewAlerts", "viewAuditIa", "viewOcorrencias", "viewReports", "viewConfigLoja", "viewConfigAuditoria", "viewConfigCamera", "viewConfigNotificacoes", "viewManutencao"];
+const VIEWS = ["viewUsers", "viewLojas", "viewPdvCards", "viewReceipts", "viewConsultar", "viewAlerts", "viewAuditIa", "viewErroTecnico", "viewOcorrencias", "viewReports", "viewConfigLoja", "viewConfigAuditoria", "viewConfigCamera", "viewConfigNotificacoes", "viewManutencao"];
 
 document.querySelectorAll(".nav-item[data-view]").forEach(item => {
   item.addEventListener("click", () => {
@@ -1024,6 +1024,7 @@ document.querySelectorAll(".nav-item[data-view]").forEach(item => {
                    (id === "viewConsultar" && view === "consultar") ||
                    (id === "viewAlerts" && view === "alerts") ||
                    (id === "viewAuditIa" && view === "auditIa") ||
+                   (id === "viewErroTecnico" && view === "erroTecnico") ||
                    (id === "viewOcorrencias" && view === "ocorrencias") ||
                    (id === "viewReports" && view === "reports") ||
                    (id === "viewConfigLoja" && view === "config-loja") ||
@@ -1042,6 +1043,7 @@ document.querySelectorAll(".nav-item[data-view]").forEach(item => {
     else if (view === "consultar") iniciarViewConsultar();
     else if (view === "alerts") iniciarViewAlertas();
     else if (view === "auditIa") iniciarViewAuditIa();
+    else if (view === "erroTecnico") iniciarViewErroTecnico();
     else if (view === "ocorrencias") iniciarViewOcorrencias();
     else if (view === "reports") iniciarViewRelatorios();
     else if (view === "config-loja") iniciarViewConfigLoja();
@@ -3248,6 +3250,96 @@ async function carregarAuditIa() {
     auditIaItems = [];
     _selAuditIa.clear();
     renderAuditIa();
+  }
+}
+
+// ── Erro técnico IA (severity "info" = DIVERGENCIA_CATEGORIA isolada) ─────────
+let erroTecnicoItems = [];
+
+function iniciarViewErroTecnico() {
+  const dateInput = document.getElementById("erroTecnicoDateInput");
+  if (dateInput) {
+    dateInput.value = selectedDate;
+    if (!dateInput.dataset.bound) {
+      dateInput.addEventListener("change", () => { selectedDate = dateInput.value; carregarErroTecnico(); });
+      dateInput.dataset.bound = "1";
+    }
+  }
+  const search = document.getElementById("erroTecnicoSearchInput");
+  if (search && !search.dataset.bound) {
+    search.addEventListener("input", () => renderErroTecnico());
+    search.dataset.bound = "1";
+  }
+  const btn = document.getElementById("btnErroTecnicoRefresh");
+  if (btn && !btn.dataset.bound) {
+    btn.addEventListener("click", () => carregarErroTecnico());
+    btn.dataset.bound = "1";
+  }
+  carregarErroTecnico();
+}
+
+async function carregarErroTecnico() {
+  const params = new URLSearchParams({ loja: LOJA, filter: "all", data: selectedDate });
+  try {
+    const resp = await apiFetch(`/api/v1/alerts?${params}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const items = await resp.json();
+    erroTecnicoItems = items.filter(i => i.severity === "info");
+    renderErroTecnico();
+  } catch (e) {
+    erroTecnicoItems = [];
+    renderErroTecnico();
+  }
+}
+
+function renderErroTecnico() {
+  const tbody = document.getElementById("erroTecnicoTable");
+  const resumo = document.getElementById("erroTecnicoResumo");
+  if (!tbody) return;
+  const q = (document.getElementById("erroTecnicoSearchInput")?.value || "").trim().toLowerCase();
+  const rows = erroTecnicoItems.filter(item => {
+    if (!q) return true;
+    return [item.product, item.receipt, item.analysis, item.result, item.note]
+      .some(v => String(v || "").toLowerCase().includes(q));
+  });
+  if (resumo) {
+    resumo.innerHTML = `<strong>${rows.length}</strong><small>erro${rows.length === 1 ? "" : "s"} técnico${rows.length === 1 ? "" : "s"} IA no período</small>`;
+  }
+  tbody.innerHTML = rows.length ? rows.map(item => {
+    const subtitle = (item.analysis || "").replace(/^(PASSO \d:\s*)/i, "").slice(0, 70);
+    return `
+      <tr class="cupons-row" data-id="${item.id}">
+        <td><span class="severity info"><i></i>Erro técnico</span></td>
+        <td>${escapeText(item.time || "-")}</td>
+        <td class="receipt-cell"><strong>${escapeText(item.pdv || "-")}</strong><span>Cupom ${escapeText(item.receipt || "-")}</span></td>
+        <td><div class="event-cell"><img class="mini-cctv" src="${item.imageUrl || 'assets/frame-register.svg'}" loading="lazy" onerror="this.src='assets/frame-register.svg';this.onerror=null" alt=""><div><strong>${escapeText(item.event || "-")}</strong><span>${escapeText(subtitle)}</span></div></div></td>
+        <td class="product-cell"><strong>${escapeText(item.product || "-")}</strong><span>${escapeText(item.value || "-")}</span></td>
+        <td><div class="confidence"><span>${item.confidence || 0}%</span><i class="confidence-meter"><i style="width:${item.confidence || 0}%"></i></i></div></td>
+        <td><div class="row-actions"><button data-action="escalar" title="Escalar para suspeito real"><i data-lucide="triangle-alert"></i></button></div></td>
+      </tr>`;
+  }).join("") : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:22px">Nenhum erro técnico no período — nada a revisar.</td></tr>`;
+  tbody.querySelectorAll("button[data-action='escalar']").forEach(b => {
+    b.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const id = b.closest("tr[data-id]")?.dataset.id;
+      if (id) escalarErroTecnico(id);
+    });
+  });
+  if (window.lucide) lucide.createIcons();
+}
+
+async function escalarErroTecnico(id) {
+  if (!confirm("Escalar este item para SUSPEITO REAL? Ele passará a contar como alerta a revisar.")) return;
+  try {
+    const resp = await apiFetch(`/api/v1/alerts/${id}/decision`, {
+      method: "POST",
+      body: JSON.stringify({ action: "escalate" }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    _toast("Escalado para suspeito real");
+    await carregarErroTecnico();
+  } catch (e) {
+    _toast("Falha ao escalar", "error");
   }
 }
 

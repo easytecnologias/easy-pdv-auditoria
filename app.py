@@ -1327,7 +1327,7 @@ def obter_video_cupom(
 
 
 class DecisionIn(BaseModel):
-    action: str = Field(pattern=r"^(save|ignore)$")
+    action: str = Field(pattern=r"^(save|ignore|escalate)$")
     observacao: Optional[str] = Field(default=None, max_length=500)
 
 
@@ -1339,6 +1339,16 @@ def decidir_alerta(
     db: Any = Depends(get_db),
 ):
     _evento_autorizado(alerta_id, usuario, db)
+    if decisao.action == "escalate":
+        # Supervisor promove erro tecnico IA (info) a suspeito real -> vira alerta a revisar
+        cursor = db.execute(
+            "UPDATE auditoria_eventos SET severidade = 'warning', status = 'pending', observacao = ? WHERE id = ?",
+            (decisao.observacao or "", alerta_id),
+        )
+        db.commit()
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Alerta nao encontrado")
+        return {"ok": True, "severidade": "warning", "status": "pending"}
     novo_status = "resolved" if decisao.action == "save" else "ignored"
     cursor = db.execute(
         "UPDATE auditoria_eventos SET status = ?, observacao = ? WHERE id = ?",
