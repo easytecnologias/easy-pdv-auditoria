@@ -279,7 +279,7 @@ def _decode_token(token: str) -> int:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         return int(payload["sub"])
     except (JWTError, KeyError, ValueError):
-        raise HTTPException(status_code=401, detail="Token invÃ¡lido ou expirado")
+        raise HTTPException(status_code=401, detail="Token inválido ou expirado")
 
 
 def autenticar_usuario(
@@ -291,14 +291,14 @@ def autenticar_usuario(
     usuario_id = _decode_token(authorization[len("Bearer "):].strip())
     row = db.execute("SELECT * FROM usuarios WHERE id = ? AND ativo = 1", (usuario_id,)).fetchone()
     if row is None:
-        raise HTTPException(status_code=401, detail="UsuÃ¡rio inativo ou nÃ£o encontrado")
+        raise HTTPException(status_code=401, detail="Usuário inativo ou não encontrado")
     return row
 
 
 def requer_perfil(*perfis: str):
     def dep(usuario: dict = Depends(autenticar_usuario)) -> dict:
         if usuario["perfil"] not in perfis:
-            raise HTTPException(status_code=403, detail="Sem permissÃ£o")
+            raise HTTPException(status_code=403, detail="Sem permissão")
         return usuario
     return dep
 
@@ -349,7 +349,7 @@ def login(request: Request, dados: LoginIn, db: Any = Depends(get_db)):
         "SELECT * FROM usuarios WHERE email = ? AND ativo = 1", (dados.email,)
     ).fetchone()
     if row is None or not _verificar_senha(dados.senha, row["senha_hash"]):
-        raise HTTPException(status_code=401, detail="Email ou senha invÃ¡lidos")
+        raise HTTPException(status_code=401, detail="Email ou senha inválidos")
     return {
         "token": _criar_token(row["id"]),
         "usuario": {
@@ -373,7 +373,7 @@ def me(usuario: dict = Depends(autenticar_usuario)):
     }
 
 
-# --- CRUD de usuÃ¡rios ---
+# --- CRUD de usuários ---
 
 HIERARQUIA = {"admin": 3, "supervisor": 2, "operador": 1}
 
@@ -399,11 +399,11 @@ class SenhaUpdate(BaseModel):
 
 
 def _pode_gerenciar(quem: dict, perfil_alvo: str, loja_alvo: Optional[str]) -> bool:
-    """Retorna True se `quem` tem autoridade para criar/editar um usuÃ¡rio com perfil_alvo na loja_alvo."""
+    """Retorna True se `quem` tem autoridade para criar/editar um usuário com perfil_alvo na loja_alvo."""
     if quem["perfil"] == "admin":
         return True
     if quem["perfil"] == "supervisor":
-        # supervisor sÃ³ pode gerenciar operadores da prÃ³pria loja
+        # supervisor só pode gerenciar operadores da própria loja
         return perfil_alvo == "operador" and quem["loja_id"] == loja_alvo
     return False
 
@@ -430,9 +430,9 @@ def criar_usuario(
     db: Any = Depends(get_db),
 ):
     if dados.perfil not in HIERARQUIA:
-        raise HTTPException(status_code=400, detail="Perfil invÃ¡lido")
+        raise HTTPException(status_code=400, detail="Perfil inválido")
     if not _pode_gerenciar(usuario, dados.perfil, dados.loja_id):
-        raise HTTPException(status_code=403, detail="Sem permissÃ£o para criar este perfil")
+        raise HTTPException(status_code=403, detail="Sem permissão para criar este perfil")
     try:
         cur = db.execute(
             "INSERT INTO usuarios (nome, email, senha_hash, perfil, loja_id) VALUES (?, ?, ?, ?, ?) RETURNING id",
@@ -442,7 +442,7 @@ def criar_usuario(
         db.commit()
     except psycopg2.IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=409, detail="Email jÃ¡ cadastrado")
+        raise HTTPException(status_code=409, detail="Email já cadastrado")
     return {"ok": True, "id": novo_id}
 
 
@@ -455,11 +455,11 @@ def editar_usuario(
 ):
     alvo = db.execute("SELECT * FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
     if alvo is None:
-        raise HTTPException(status_code=404, detail="UsuÃ¡rio nÃ£o encontrado")
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
     perfil_novo = dados.perfil or alvo["perfil"]
     loja_nova = dados.loja_id if dados.loja_id is not None else alvo["loja_id"]
     if not _pode_gerenciar(usuario, perfil_novo, loja_nova):
-        raise HTTPException(status_code=403, detail="Sem permissÃ£o para editar este usuÃ¡rio")
+        raise HTTPException(status_code=403, detail="Sem permissão para editar este usuário")
     campos = {k: v for k, v in dados.model_dump().items() if v is not None}
     if not campos:
         return {"ok": True}
@@ -478,9 +478,9 @@ def redefinir_senha(
 ):
     alvo = db.execute("SELECT * FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
     if alvo is None:
-        raise HTTPException(status_code=404, detail="UsuÃ¡rio nÃ£o encontrado")
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
     if not _pode_gerenciar(usuario, alvo["perfil"], alvo["loja_id"]):
-        raise HTTPException(status_code=403, detail="Sem permissÃ£o")
+        raise HTTPException(status_code=403, detail="Sem permissão")
     db.execute(
         "UPDATE usuarios SET senha_hash = ? WHERE id = ?",
         (_hash_senha(dados.nova_senha), usuario_id),
@@ -497,11 +497,11 @@ def desativar_usuario(
 ):
     alvo = db.execute("SELECT * FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
     if alvo is None:
-        raise HTTPException(status_code=404, detail="UsuÃ¡rio nÃ£o encontrado")
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
     if not _pode_gerenciar(usuario, alvo["perfil"], alvo["loja_id"]):
-        raise HTTPException(status_code=403, detail="Sem permissÃ£o")
+        raise HTTPException(status_code=403, detail="Sem permissão")
     if usuario_id == usuario["id"]:
-        raise HTTPException(status_code=400, detail="NÃ£o Ã© possÃ­vel desativar o prÃ³prio usuÃ¡rio")
+        raise HTTPException(status_code=400, detail="Não é possível desativar o próprio usuário")
     db.execute("UPDATE usuarios SET ativo = 0 WHERE id = ?", (usuario_id,))
     db.commit()
     return {"ok": True}
@@ -537,7 +537,7 @@ def criar_loja(
 ):
     loja_id = dados.id.strip().lower()
     if not loja_id:
-        raise HTTPException(status_code=400, detail="ID invÃ¡lido")
+        raise HTTPException(status_code=400, detail="ID inválido")
     token = secrets.token_hex(24)
     try:
         db.execute(
@@ -547,7 +547,7 @@ def criar_loja(
         db.commit()
     except psycopg2.IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=409, detail="ID jÃ¡ cadastrado")
+        raise HTTPException(status_code=409, detail="ID já cadastrado")
     return {"ok": True, "id": loja_id, "api_token": token}
 
 
@@ -560,7 +560,7 @@ def editar_loja(
 ):
     loja = db.execute("SELECT id FROM lojas WHERE id = ?", (loja_id,)).fetchone()
     if loja is None:
-        raise HTTPException(status_code=404, detail="Loja nÃ£o encontrada")
+        raise HTTPException(status_code=404, detail="Loja não encontrada")
     campos = {k: v for k, v in dados.model_dump().items() if v is not None}
     if campos:
         sets = ", ".join(f"{k} = ?" for k in campos)
@@ -577,7 +577,7 @@ def excluir_loja(
 ):
     loja = db.execute("SELECT id FROM lojas WHERE id = ?", (loja_id,)).fetchone()
     if loja is None:
-        raise HTTPException(status_code=404, detail="Loja nÃ£o encontrada")
+        raise HTTPException(status_code=404, detail="Loja não encontrada")
     eventos = db.execute(
         "SELECT COUNT(*) AS c FROM auditoria_eventos WHERE loja_id = ?", (loja_id,)
     ).fetchone()
@@ -596,7 +596,7 @@ def regenerar_token_loja(
 ):
     loja = db.execute("SELECT id FROM lojas WHERE id = ?", (loja_id,)).fetchone()
     if loja is None:
-        raise HTTPException(status_code=404, detail="Loja nÃ£o encontrada")
+        raise HTTPException(status_code=404, detail="Loja não encontrada")
     token = secrets.token_hex(24)
     db.execute("UPDATE lojas SET api_token = ? WHERE id = ?", (token, loja_id))
     db.commit()
@@ -808,7 +808,7 @@ def _evento_para_alerta(row: dict, loja_token: str = "") -> dict:
         "code": "-",
         "confidence": row["confianca"] if row["confianca"] is not None else 0,
         "state": state,
-        "stateText": STATE_LABELS.get(status, "Em revisÃ£o"),
+        "stateText": STATE_LABELS.get(status, "Em revisão"),
         "qty": _formatar_qty(row["quantidade"] or 0),
         "value": _formatar_valor(row["valor"] or 0),
         "result": RESULTADO_LABELS.get(resultado, resultado),
@@ -856,7 +856,7 @@ def listar_alertas(
     elif filter == "resolved":
         query += " AND status = 'resolved'"
 
-    # Quando busca por cupom especÃ­fico: ordem cronolÃ³gica (ASC)
+    # Quando busca por cupom específico: ordem cronológica (ASC)
     # Quando lista todos os alertas: mais recente primeiro (DESC)
     order = "ASC" if cupom else "DESC"
     query += f" ORDER BY timestamp {order} LIMIT 200"
@@ -1066,10 +1066,10 @@ def solicitar_video_cupom(
     if not loja_id:
         # admin sem loja fixa â€” usa o slug enviado pelo dashboard
         if not loja:
-            raise HTTPException(status_code=403, detail="Informe o parÃ¢metro loja")
+            raise HTTPException(status_code=403, detail="Informe o parâmetro loja")
         row = db.execute("SELECT id FROM lojas WHERE slug = ?", (loja,)).fetchone()
         if row is None:
-            raise HTTPException(status_code=404, detail="Loja nÃ£o encontrada")
+            raise HTTPException(status_code=404, detail="Loja não encontrada")
         loja_id = row["id"]
     if _purchase_video_path(loja_id, pdv, cupom).is_file():
         return {"status": "ready"}
