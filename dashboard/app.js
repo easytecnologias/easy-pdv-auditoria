@@ -3,6 +3,10 @@ const LOJA_NOME   = (window.APP_CONFIG || {}).LOJA_NOME  || "Loja 106";
 const AMBIENTE    = (window.APP_CONFIG || {}).AMBIENTE   || "Produção";
 const REFRESH_INTERVAL_MS = 15000;
 
+// Suspeito real = nao OK e nao erro tecnico IA ("info").
+// DIVERGENCIA_CATEGORIA isolada chega como severity "info" e NAO deve contar como suspeito.
+const ehSuspeitoReal = a => a.severity !== "ok" && a.severity !== "info";
+
 // Aplica valores do config no HTML assim que o DOM estiver pronto
 document.addEventListener("DOMContentLoaded", () => {
   const ambEl = document.getElementById("ambienteLabel");
@@ -417,7 +421,7 @@ async function carregarGeminiCredito() {
 function renderAlerts() {
   const query = document.getElementById("searchInput").value.toLowerCase();
   // Alertas recentes mostra só divergências reais — itens conferidos ficam na Auditoria IA
-  const alertasReais = alerts.filter(a => a.severity !== "ok");
+  const alertasReais = alerts.filter(ehSuspeitoReal);
   const rows = alertasReais.filter(alert => {
     const filterMatch = activeFilter === "all"
       || (activeFilter === "critical" && alert.severity === "critical")
@@ -498,7 +502,7 @@ function renderHealthMetric() {
 
 function renderAlertMetrics() {
   // Métricas de Alertas consideram só divergências reais — itens conferidos (severity "ok") são Auditoria IA
-  const alertasReais = alerts.filter(a => a.severity !== "ok");
+  const alertasReais = alerts.filter(ehSuspeitoReal);
   const total = alertasReais.length;
   const pendentes = alertasReais.filter(alert => alert.state !== "resolved").length;
   const criticos = alertasReais.filter(alert => alert.severity === "critical" && alert.state !== "resolved").length;
@@ -2878,7 +2882,7 @@ function iniciarViewAlertas() {
   const selAllAlertas = document.getElementById("selAllAlertas");
   if (selAllAlertas && !selAllAlertas.dataset.bound) {
     selAllAlertas.addEventListener("change", () => {
-      const filtrados = alerts.filter(a => a.severity !== "ok");
+      const filtrados = alerts.filter(ehSuspeitoReal);
       const query = (document.getElementById("searchInput2")?.value || "").toLowerCase();
       const visiveis = filtrados.filter(a => {
         if (activeFilter2 !== "all") { if (a.state !== activeFilter2) return false; }
@@ -2917,7 +2921,7 @@ function renderAlertas2() {
   if (!table2) return;
 
   // Alertas mostra só divergências reais — itens conferidos (severity "ok") ficam na Auditoria IA
-  const alertasReais = alerts.filter(a => a.severity !== "ok");
+  const alertasReais = alerts.filter(ehSuspeitoReal);
 
   // Atualizar badges
   document.getElementById("countAll2").textContent = alertasReais.length;
@@ -3235,7 +3239,7 @@ async function carregarAuditIa() {
     let items = await resp.json();
     // Resultado vindo do backend: "result" já traduzido (Confere, Categoria divergente, etc)
     if (auditIaResult === "OK") items = items.filter(i => i.severity === "ok");
-    else if (auditIaResult === "SUSPEITO") items = items.filter(i => i.severity !== "ok");
+    else if (auditIaResult === "SUSPEITO") items = items.filter(ehSuspeitoReal);
     auditIaItems = items;
     _selAuditIa.clear();
     _atualizarBtnSel("btnAuditIaClear", _selAuditIa);
@@ -3340,7 +3344,7 @@ function renderAuditIa() {
   });
 
   const ok = auditIaItems.filter(i => i.severity === "ok").length;
-  const suspeito = auditIaItems.filter(i => i.severity !== "ok").length;
+  const suspeito = auditIaItems.filter(ehSuspeitoReal).length;
   if (resumo) {
     resumo.innerHTML = `<strong>${rows.length}</strong><small>${ok} aprovados · ${suspeito} suspeitos IA</small>`;
   }
@@ -3540,7 +3544,7 @@ function renderOcorrencias() {
   const q = (document.getElementById("ocorrSearch")?.value || "").trim().toLowerCase();
 
   const aprovadas = _ocorrItems.filter(i => i.severity === "ok");
-  const reprovadas = _ocorrItems.filter(i => i.severity !== "ok");
+  const reprovadas = _ocorrItems.filter(ehSuspeitoReal);
 
   if (countAprov) countAprov.textContent = aprovadas.length;
   if (countReprov) countReprov.textContent = reprovadas.length;
